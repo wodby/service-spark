@@ -1,0 +1,103 @@
+name: spark-master
+title: Apache Spark master
+icon: spark
+type: service
+scalable: false
+
+labels:
+- spark
+- data-processing
+
+options:
+- version: '4.1'
+  tag: '4.1.3'
+  default: true
+
+endpoints:
+- name: spark
+  ports:
+  - name: cluster
+    number: 7077
+    protocol: tcp
+    main: true
+    private: true
+  - name: ui
+    number: 8080
+    protocol: http
+
+env:
+- name: SPARK_PUBLIC_DNS
+  value: '{{service.host}}'
+
+helm:
+  name: wodby
+  source: oci://registry-1.docker.io/wodby/stateless
+  chart: oci://registry-1.docker.io/wodby/stateless
+  version: 0.2.0
+  valueMappings:
+    replicas: replicaCount
+    nameOverride: nameOverride
+    fullnameOverride: fullnameOverride
+    serviceAccountName: serviceAccount.name
+    serviceAccountCreate: serviceAccount.create
+    strategy: strategy.type
+    minReady: minReadySeconds
+    progressDeadline: progressDeadlineSeconds
+    shutdownGracePeriod: terminationGracePeriodSeconds
+  values:
+  - name: containerName
+    value: spark-master
+  - name: args
+    value:
+    - /opt/spark/bin/spark-class
+    - org.apache.spark.deploy.master.Master
+    - --host
+    - 0.0.0.0
+    - --port
+    - '7077'
+    - --webui-port
+    - '8080'
+  - name: containerPorts
+    value:
+    - name: cluster
+      containerPort: 7077
+      protocol: TCP
+    - name: ui
+      containerPort: 8080
+      protocol: TCP
+  - name: startupProbe
+    value:
+      tcpSocket:
+        port: cluster
+      failureThreshold: 30
+      periodSeconds: 5
+  - name: readinessProbe
+    value:
+      tcpSocket:
+        port: cluster
+      periodSeconds: 10
+  - name: livenessProbe
+    value:
+      tcpSocket:
+        port: cluster
+      initialDelaySeconds: 30
+      periodSeconds: 20
+
+workloads:
+- name: main
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: '{{helm.release}}'
+  kind: deployment
+  primary: true
+  helm:
+    labels: podLabels
+    annotations: podAnnotations
+    volumes: extraVolumes
+  containers:
+  - name: spark-master
+    image: apache/spark
+    helm:
+      resources: resources
+      env: envVars
+      mounts: extraVolumeMounts
