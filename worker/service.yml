@@ -1,0 +1,104 @@
+name: spark-worker
+title: Apache Spark worker
+icon: spark
+type: service
+scalable: true
+
+labels:
+- spark
+- data-processing
+- worker
+
+options:
+- version: '4.1'
+  tag: '4.1.3'
+  default: true
+
+settings:
+- name: worker_cores
+  title: Worker CPU cores
+  default: '2'
+  var: SPARK_WORKER_CORES
+- name: worker_memory
+  title: Worker memory
+  default: 2g
+  var: SPARK_WORKER_MEMORY
+
+links:
+- name: master
+  title: Apache Spark master
+  required: true
+  env:
+  - name: SPARK_MASTER_URL
+    value: spark://{{link.host}}:{{link.port}}
+  selectors:
+  - type: service
+    labels:
+    - spark
+
+helm:
+  name: wodby
+  source: oci://registry-1.docker.io/wodby/stateless
+  chart: oci://registry-1.docker.io/wodby/stateless
+  version: 0.2.0
+  valueMappings:
+    replicas: replicaCount
+    nameOverride: nameOverride
+    fullnameOverride: fullnameOverride
+    serviceAccountName: serviceAccount.name
+    serviceAccountCreate: serviceAccount.create
+    strategy: strategy.type
+    minReady: minReadySeconds
+    progressDeadline: progressDeadlineSeconds
+    shutdownGracePeriod: terminationGracePeriodSeconds
+  values:
+  - name: containerName
+    value: spark-worker
+  - name: service.enabled
+    value: false
+  - name: args
+    value:
+    - /opt/spark/bin/spark-class
+    - org.apache.spark.deploy.worker.Worker
+    - $(SPARK_MASTER_URL)
+    - --webui-port
+    - '8081'
+  - name: containerPorts
+    value: []
+  - name: startupProbe
+    value:
+      exec:
+        command:
+        - bash
+        - -c
+        - pgrep -f org.apache.spark.deploy.worker.Worker
+      failureThreshold: 30
+      periodSeconds: 5
+  - name: livenessProbe
+    value:
+      exec:
+        command:
+        - bash
+        - -c
+        - pgrep -f org.apache.spark.deploy.worker.Worker
+      initialDelaySeconds: 30
+      periodSeconds: 20
+
+workloads:
+- name: main
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: '{{helm.release}}'
+  kind: deployment
+  primary: true
+  helm:
+    labels: podLabels
+    annotations: podAnnotations
+    volumes: extraVolumes
+  containers:
+  - name: spark-worker
+    image: apache/spark
+    helm:
+      resources: resources
+      env: envVars
+      mounts: extraVolumeMounts
