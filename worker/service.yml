@@ -14,6 +14,7 @@ options:
   tag: '4.1.3'
   default: true
 
+  eol: '2027-06-11T00:00:00+00:00'
 settings:
 - name: worker_cores
   title: Worker CPU cores
@@ -40,7 +41,7 @@ helm:
   name: wodby
   source: oci://registry-1.docker.io/wodby/stateless
   chart: oci://registry-1.docker.io/wodby/stateless
-  version: 0.2.0
+  version: 0.2.1
   valueMappings:
     replicas: replicaCount
     nameOverride: nameOverride
