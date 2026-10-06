@@ -1,5 +1,6 @@
 name: spark-worker
 title: Apache Spark worker
+guidance: GUIDANCE.md
 icon: spark
 type: service
 scalable: true

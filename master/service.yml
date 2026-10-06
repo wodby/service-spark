@@ -1,5 +1,6 @@
 name: spark-master
 title: Apache Spark master
+guidance: GUIDANCE.md
 icon: spark
 type: service
 scalable: false
