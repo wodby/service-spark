@@ -12,4 +12,4 @@ Workers are a separate service, Spark worker, linked to this one.
 
 ## Basic auth
 
-Wodby protects this service's public domains with basic auth by default: each app service of it gets its own generated password, which members reveal on the environment's Domains > Auths page. Services inside the environment reach it directly, without the password. The protection can be switched off when the app is created, or later by deleting the entry; a stack can also turn the default off.
+Wodby protects this service's public domains with basic auth by default: each app service of it gets its own generated password, which members reveal on the environment's Endpoints > Auths page. Services inside the environment reach it directly, without the password. The protection can be switched off when the app is created, or later by deleting the entry; a stack can also turn the default off.
