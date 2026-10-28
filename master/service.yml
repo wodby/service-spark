@@ -3,6 +3,7 @@ title: Apache Spark master
 guidance: GUIDANCE.md
 icon: spark
 type: service
+basicAuth: true
 scalable: false
 
 labels:
